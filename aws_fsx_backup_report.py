@@ -10,22 +10,22 @@ from datetime import date
 from datetime import datetime
 import json
 import subprocess
+import smtplib
+from email.mime.text import MIMEText
     
-email_sender = '<EMAIL SENDER>'
+email_sender = '<EMAIL SENDER'
 email_receiver = '<EMAIL RECEIVER>'
 smtp_server = '<SMTP SERVER>'
 max_age = 7
     
-# Use Python subprocess to have the AWS CLI pull all user initated backups into a JSON formatted variable
-def get_backup_info(profile='default'):
+def get_backup_info(profile='default'): # Use Python subprocess to have the AWS CLI pull all user initated backups into a JSON formatted variable
     
     backupinfo = subprocess.run(["aws", "fsx", "describe-backups", "--output", "json", "--filter", "Name=backup-type,Values=USER_INITIATED", "--profile", profile], stdout=subprocess.PIPE)
     backupinfo_utf8 = backupinfo.stdout.decode('utf-8')
     backupinfo_utf8_json = json.loads(backupinfo_utf8)
     return backupinfo_utf8_json
-    
-# Iterate through 'backup_dict' and find any backups older than 'max_age' 
-def get_backups2delete(backup_dict, max_age):
+
+def get_backups2delete(backup_dict, max_age): # Iterate through 'backup_dict' and find any backups older than 'max_age' 
     
     backups2delete = {}
     date_current = date.today()
@@ -39,9 +39,8 @@ def get_backups2delete(backup_dict, max_age):
         if duration.days > max_age:
             backups2delete[backupid] = { "FileSystem Details": filesystem, "Backup Date": date_backup }
     return backups2delete
-    
-# Convert 'backups2delete' into string format for use in email 
-def convert_dict2string(backups2delete):
+
+def convert_dict2string(backups2delete): # Convert 'backups2delete' into string format for use in email 
     
     output_file = ''
     for k, v in sorted(backups2delete.items()):
@@ -50,9 +49,8 @@ def convert_dict2string(backups2delete):
         for k1, v1 in sorted(v.items()):
             output_file = output_file + "-%s: %s" % (k1, v1) + '\n'
     return output_file
-    
-# Email backup report
-def email_report(backups2delete, email_sender, email_receiver, smtp_server, max_age):
+
+def email_report(backups2delete, email_sender, email_receiver, smtp_server, max_age): # Email backup report
     
     max_age_str = str(max_age)
     title = "### AWS FSx Backups older than " + max_age_str + " days ###\n"
@@ -64,13 +62,22 @@ def email_report(backups2delete, email_sender, email_receiver, smtp_server, max_
     s = smtplib.SMTP(smtp_server)
     s.sendmail(email_sender, [email_receiver], msg.as_string())
     s.quit()
-    
-    
+
 # Call 'get_backup_info' function to create a dictionary of all AWS FSx user initiated backups
-backup_dict = get_backup_info()
+backup_dict_default = get_backup_info()
+backup_dict_dev = get_backup_info('dev')
+backup_dict_prod = get_backup_info('prod')
     
 # Call 'get_backups2delete' function to get a dictionary of all backups older than days specified in second argument
-backups2delete = get_backups2delete(backup_dict, max_age)
+backups2delete_default = get_backups2delete(backup_dict_default, max_age)
+backups2delete_dev = get_backups2delete(backup_dict_dev, max_age)
+backups2delete_prod = get_backups2delete(backup_dict_prod, max_age)
+    
+# Combine dictionaries created from backups2delete function into single dictionary
+backups2delete_all = {}
+backups2delete_all['Backups-default'] = backups2delete_default
+backups2delete_all['Backups-dev'] = backups2delete_dev
+backups2delete_all['Backups-prod'] = backups2delete_prod
     
 # Call 'email_report' to covert 'backups2delete' dictionary into email format and send
-email_report(backups2delete, email_sender, email_receiver, smtp_server, max_age)
+email_report(backups2delete_all, email_sender, email_receiver, smtp_server, max_age)
