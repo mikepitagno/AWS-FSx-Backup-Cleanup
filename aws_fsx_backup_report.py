@@ -79,5 +79,5 @@ backups2delete_all['Backups-default'] = backups2delete_default
 backups2delete_all['Backups-dev'] = backups2delete_dev
 backups2delete_all['Backups-prod'] = backups2delete_prod
     
-# Call 'email_report' to covert 'backups2delete' dictionary into email format and send
+# Call 'email_report' to covert 'backups2delete_all' dictionary into email format and send
 email_report(backups2delete_all, email_sender, email_receiver, smtp_server, max_age)
