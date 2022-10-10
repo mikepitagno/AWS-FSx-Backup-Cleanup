@@ -13,7 +13,7 @@ import subprocess
 import smtplib
 from email.mime.text import MIMEText
     
-email_sender = '<EMAIL SENDER'
+email_sender = '<EMAIL SENDER>'
 email_receiver = '<EMAIL RECEIVER>'
 smtp_server = '<SMTP SERVER>'
 max_age = 7
