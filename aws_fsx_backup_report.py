@@ -20,7 +20,7 @@ max_age = 7
     
 def get_backup_info(profile='default'): # Use Python subprocess to have the AWS CLI pull all user initated backups into a JSON formatted variable
     
-    backupinfo = subprocess.run(["aws", "fsx", "describe-backups", "--output", "json", "--filter", "Name=backup-type,Values=USER_INITIATED", "--profile", profile], stdout=subprocess.PIPE)
+    backupinfo = subprocess.run(["/usr/local/bin/aws", "fsx", "describe-backups", "--output", "json", "--filter", "Name=backup-type,Values=USER_INITIATED", "--profile", profile], stdout=subprocess.PIPE)
     backupinfo_utf8 = backupinfo.stdout.decode('utf-8')
     backupinfo_utf8_json = json.loads(backupinfo_utf8)
     return backupinfo_utf8_json
